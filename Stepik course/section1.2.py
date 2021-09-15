@@ -95,6 +95,60 @@ def betterFrequentWords(text: str, k: int):
     return frequentPatterns
 
 
+def reverse_complement(pattern: str):
+    '''
+    Reverse Complement Problem: Find the reverse complement of a DNA string.
+        Input: A DNA string Pattern.
+        Output: The reverse complement of Pattern.
+    '''
+    res = ""
+    for i in range(len(pattern)):
+        res += (pattern[i] in 'AT')*('AT'.replace(pattern[i], "")) + \
+            (pattern[i] in 'CG')*('CG'.replace(pattern[i], ""))
+
+    return res[::-1]
+
+
+def pattern_matching(pattern: str, genome: str):
+    """
+    Input: Two strings, Pattern and Genome.
+    Output: A collection of space-separated integers specifying all starting positions where 
+            Pattern appears as a substring of Genome.
+    """
+    res = []
+    k = len(pattern)
+    for i in range(0, len(genome) - k):
+        if pattern == genome[i:i+k]:
+            res.append(i)
+
+    return res
+
+
+def find_clumps(text: str, k: int, L: int, t: int):
+    """
+    FindClumps(Text, k, L, t)
+        Patterns ← an array of strings of length 0
+        n ← |Text|
+        for every integer i between 0 and n − L
+            Window ← Text(i, L)
+            freqMap ← FrequencyTable(Window, k)
+            for every key s in freqMap
+                if freqMap[s] ≥ t
+                    append s to Patterns
+        remove duplicates from Patterns
+        return Patterns
+    """
+    patterns = []
+    n = len(text)
+    for i in range(0, n - L):
+        window = text[i: i+L]
+        freqMap = frequencyTable(window, k)
+        for key, value in freqMap.items():
+            if value >= t:
+                patterns.append(key)
+    return list(set(patterns))
+
+
 def first_task():
     '''
     Implement PatternCount (reproduced below).
@@ -144,5 +198,71 @@ def second_task():
     print(" ".join(res))
 
 
+def third_task(pattern: str):
+    """
+    Given a nucleotide p, we denote its complementary nucleotide as p*. The reverse complement of a string Pattern = p1 … pn is the string Patternrc = pn* … p1* formed by taking the complement of each nucleotide in Pattern, then reversing the resulting string. We will need the solution to the following problem throughout this chapter:
+
+    Reverse Complement Problem: Find the reverse complement of a DNA string.
+
+    Input: A DNA string Pattern.
+    Output: Patternrc , the reverse complement of Pattern.
+    """
+    with open("pattern.txt", "r") as f:
+        pattern = f.read().strip()
+    print("------------")
+    res = reverse_complement(pattern).strip(" ")
+    with open("res.txt", "w") as f:
+        f.write(res)
+    return reverse_complement(pattern)
+
+
+def fourth_task():
+    """
+    Code Challenge: Solve the Pattern Matching Problem.
+
+    Input: Two strings, Pattern and Genome.
+    Output: A collection of space-separated integers specifying all starting positions where 
+            Pattern appears as a substring of Genome.
+    """
+    with open("/home/snopoff/Downloads/Vibrio_cholerae.txt", "r") as f:
+        genome = f.read()
+    pattern = "CTTGATCAT"
+    print()
+    res = pattern_matching(pattern, genome)
+    with open("res.txt", "w") as f:
+        f.write(" ".join(list(map(str, res))))
+    print(res)
+
+#! The Clump Finding Problem
+
+
+def fifth_task():
+    """
+    Code Challenge: Solve the Clump Finding Problem (restated below).
+
+    Clump Finding Problem: Find patterns forming clumps in a string.
+
+    We defined a k-mer as a "clump" if it appears many times within a short interval of the genome. 
+    More formally, given integers L and t, a k-mer Pattern forms an (L, t)-clump inside a (longer) string Genome if 
+    there is an interval of Genome of length L in which this k-mer appears at least t times.
+
+    Input: A string Genome, and integers k, L, and t.
+    Output: All distinct k-mers forming (L, t)-clumps in Genome.
+    """
+
+    with open("/home/snopoff/Downloads/E_coli.txt", "r") as f:
+        lines = f.readlines()
+    text = lines[0].strip()
+    k, L, t = (9, 500, 3)  # list(map(int, lines[1].strip().split(" ")))
+    res = find_clumps(text, k, L, t)
+    with open("res.txt", "w") as f:
+        f.write(" ".join(res))
+    '''
+    text = input("Enter text:\n")
+    k, L, t = list(map(int, input("Enter parameters:\n").split(" ")))
+    print(find_clumps(text, k, L, t))
+    '''
+
+
 if __name__ == '__main__':
-    second_task()
+    fifth_task()
