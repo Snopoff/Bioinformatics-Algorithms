@@ -1,3 +1,5 @@
+import numpy as np
+
 
 def patternCount(text: str, pattern: str):
     '''
@@ -149,6 +151,47 @@ def find_clumps(text: str, k: int, L: int, t: int):
     return list(set(patterns))
 
 
+def changeSuffix(arr: list, pos: int, value: int):
+    for i in range(pos, len(arr)):
+        arr[i] = value
+    return arr
+
+
+def calcSkew(genome: str):
+    """
+    If this nucleotide is G, then 
+        Skewi+1(Genome) = Skewi(Genome) + 1;
+    If this nucleotide is C, then 
+        Skewi+1(Genome)= Skewi(Genome) – 1; 
+    Otherwise, 
+        Skewi+1(Genome) = Skewi(Genome).
+    """
+    n = len(genome)
+    skew = [0]*(n+1)
+    for i in range(0, n):
+        if genome[i] == "G":
+            changeSuffix(skew, i+1, skew[i]+1)
+        elif genome[i] == "C":
+            changeSuffix(skew, i+1, skew[i]-1)
+    return skew
+
+
+def findMinimumSkew(genome: str):
+    """
+    Minimum Skew Problem: Find a position in a genome where the skew diagram attains a minimum.
+
+    Input: A DNA string Genome.
+    Output: All integer(s) i minimizing Skewi (Genome) among all values of i (from 0 to |Genome|).
+    """
+    skew = calcSkew(genome)
+    index_min = np.argmin(skew)  # the first index only
+    indices = [index_min]
+    for i in range(index_min+1, len(skew)):
+        if skew[i] == skew[index_min]:
+            indices.append(i)
+    return indices
+
+
 def first_task():
     '''
     Implement PatternCount (reproduced below).
@@ -233,9 +276,8 @@ def fourth_task():
         f.write(" ".join(list(map(str, res))))
     print(res)
 
+
 #! The Clump Finding Problem
-
-
 def fifth_task():
     """
     Code Challenge: Solve the Clump Finding Problem (restated below).
@@ -264,5 +306,20 @@ def fifth_task():
     '''
 
 
+#! The Minimum Skew Problem
+def sixth_task():
+    """
+    Minimum Skew Problem: Find a position in a genome where the skew diagram attains a minimum.
+
+    Input: A DNA string Genome.
+    Output: All integer(s) i minimizing Skewi (Genome) among all values of i (from 0 to |Genome|).
+    """
+    with open("/home/snopoff/Downloads/dataset_240220_10.txt", "r") as f:
+        genome = f.read()
+    #genome = "TAAAGACTGCCGAGAGGCCAACACGAGTGCTAGAACGAGGGGCGTAAACGCGGGTCCGAT"
+    index_min = findMinimumSkew(genome)
+    print(index_min)
+
+
 if __name__ == '__main__':
-    fifth_task()
+    sixth_task()
