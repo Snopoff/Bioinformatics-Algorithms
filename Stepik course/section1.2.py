@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 
 def patternCount(text: str, pattern: str):
@@ -192,6 +193,61 @@ def findMinimumSkew(genome: str):
     return indices
 
 
+def hamming(str1: str, str2: str):
+    """
+    Hamming Distance Problem: Compute the Hamming distance between two strings.
+
+    Input: Two strings of equal length.
+    Output: The Hamming distance between these strings.
+
+    """
+    assert len(str1) == len(str2)
+    n = len(str1)
+    res = 0
+    for i in range(0, n):
+        res += str1[i] != str2[i]
+    return res
+
+
+def approx_pattern_matching(pattern: str, genome: str, d: int):
+    """
+    Approximate Pattern Matching Problem: Find all approximate occurrences of a pattern in a string.
+
+    Input: Strings Pattern and Text along with an integer d.
+    Output: All starting positions where Pattern appears as a substring of Text with at most d mismatches.
+    """
+    res = []
+    k = len(pattern)
+    for i in range(0, len(genome) - k+1):
+        dist = hamming(pattern, genome[i:i+k])
+        if dist <= d:
+            res.append(i)
+
+    return res
+
+
+def approx_pattern_count(pattern: str, text: str, d: int):
+    """
+    ApproximatePatternCount(Text, Pattern, d)
+        count ← 0
+        for i ← 0 to |Text| − |Pattern|
+            Pattern′ ← Text(i , |Pattern|)
+           if HammingDistance(Pattern, Pattern′) ≤ d
+                count ← count + 1
+        return count
+
+    Input: Strings Pattern and Text as well as an integer d.
+    Output: Count_d(Text, Pattern).
+    """
+    res = 0
+    k = len(pattern)
+    for i in range(0, len(text) - k+1):
+        dist = hamming(pattern, text[i: i+k])
+        if dist <= d:
+            res += 1
+    return res
+
+
 def first_task():
     '''
     Implement PatternCount (reproduced below).
@@ -321,5 +377,87 @@ def sixth_task():
     print(index_min)
 
 
+def seventh_task():
+    """
+    Hamming Distance Problem: Compute the Hamming distance between two strings.
+
+    Input: Two strings of equal length.
+    Output: The Hamming distance between these strings.
+    """
+    with open("/home/snopoff/Downloads/dataset_240221_3.txt", "r") as f:
+        lines = f.readlines()
+    # [line.strip() for line in lines]
+    # ["GGGCCGTTGGT", "GGACCGTTGAC"]
+    str1, str2 = [line.strip() for line in lines]
+    dist = hamming(str1, str2)
+    print(dist)
+
+#! Approximate Pattern Matching Problem
+
+
+def eigth_task():
+    """
+    We say that k-mer Pattern appears as a substring of Text with at most d mismatches, i.e 
+        HammingDistance(Pattern, Pattern') ≤ d
+
+    Approximate Pattern Matching Problem: Find all approximate occurrences of a pattern in a string.
+
+    Input: Strings Pattern and Text along with an integer d.
+    Output: All starting positions where Pattern appears as a substring of Text with at most d mismatches.
+    """
+    with open("/home/snopoff/Downloads/dataset_240221_4.txt", "r") as f:
+        lines = f.readlines()
+    str1, str2 = [line.strip() for line in lines[:2]]
+    d = int(lines[-1].strip())
+
+    res = approx_pattern_matching(str1, str2, d)
+    print(len(res))
+    with open("Stepik course/res.txt", "w") as f:
+        f.write(" ".join(list(map(str, res))))
+
+
+def ninth_task():
+    """
+    Computing Count_d(Text, Pattern) simply requires us to compute the Hamming distance 
+    between Pattern and every k-mer substring of Text, which is achieved by the following pseudocode.
+
+       ApproximatePatternCount(Text, Pattern, d)
+        count ← 0
+        for i ← 0 to |Text| − |Pattern|
+            Pattern′ ← Text(i , |Pattern|)
+           if HammingDistance(Pattern, Pattern′) ≤ d
+                count ← count + 1
+        return count
+
+    Input: Strings Pattern and Text as well as an integer d.
+    Output: Count_d(Text, Pattern).
+    """
+    with open("/home/snopoff/Downloads/dataset_240221_6.txt", "r") as f:
+        lines = f.readlines()
+    str1, str2 = [line.strip() for line in lines[:2]]
+    d = int(lines[-1].strip())
+    res = approx_pattern_count(str1, str2, d)
+    print(res)
+
+
+def eight_tests():
+    path = "/home/snopoff/Downloads/ApproximatePatternMatching/"
+    n = len([name for name in os.listdir(path + "inputs")])
+    for i in range(1, n+1):
+        print("-------")
+        print("Stage {}".format(i))
+        with open(path + "inputs/input_{}.txt".format(i), "r") as f:
+            lines = f.readlines()
+        str1, str2 = [line.strip() for line in lines[:2]]
+        d = int(lines[-1].strip())
+        print("Input data is:\n str1 = {}\n str2 = {}\n d = {}".format(str1, str2, d))
+
+        res = approx_pattern_matching(str1, str2, d)
+        res = " ".join(list(map(str, res)))
+        with open(path + "outputs/output_{}.txt".format(i), "r") as f:
+            exp = f.read().strip()
+        assert res == exp, "In {}:\n res = {}\n exp = {}".format(i, res, exp)
+
+
 if __name__ == '__main__':
-    sixth_task()
+    ninth_task()
