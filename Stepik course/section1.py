@@ -248,6 +248,87 @@ def approx_pattern_count(pattern: str, text: str, d: int):
     return res
 
 
+def neighbors(pattern: str, d: int):
+    """
+    Neighbors(Pattern, d)
+        if d = 0
+            return {Pattern}
+        if |Pattern| = 1
+            return {A, C, G, T}
+        Neighborhood ← an empty set
+        SuffixNeighbors ← Neighbors(Suffix(Pattern), d)
+        for each string Text from SuffixNeighbors
+            if HammingDistance(Suffix(Pattern), Text) < d
+                for each nucleotide x
+                    add x • Text to Neighborhood
+            else
+                add FirstSymbol(Pattern) • Text to Neighborhood
+        return Neighborhood
+
+    Input: A string Pattern and an integer d.
+    Output: The collection of strings Neighbors(Pattern, d).
+    """
+    nucl = ["A", "C", "G", "T"]
+    if d == 0:
+        return [pattern]
+    if len(pattern) == 1:
+        return nucl
+    neighborhood = []
+    suffix = pattern[1:]
+    suffixNeighborhood = neighbors(suffix, d)
+    for s in suffixNeighborhood:
+        if hamming(suffix, s) < d:
+            for x in nucl:
+                neighborhood.append(x + s)
+        else:
+            neighborhood.append(pattern[0] + s)
+
+    return neighborhood
+
+
+def frequent_words_with_mismatches(text: str, k: int, d: int):
+    """
+    FrequentWordsWithMismatches(Text, k, d)
+        Patterns ← an array of strings of length 0
+        freqMap ← empty map
+        n ← |Text|
+        for i ← 0 to n - k
+            Pattern ← Text(i, k)
+            neighborhood ← Neighbors(Pattern, d)
+            for j ← 0 to |neighborhood| - 1
+                neighbor ← neighborhood[j]
+                if freqMap[neighbor] doesn't exist
+                    freqMap[neighbor] ← 1
+                else
+                    freqMap[neighbor] ← freqMap[neighbor] + 1
+        m ← MaxMap(freqMap)
+        for every key Pattern in freqMap
+            if freqMap[Pattern] = m
+                append Pattern to Patterns
+        return Patterns
+
+    Input: A string Text as well as integers k and d. (You may assume k ≤ 12 and d ≤ 3.)
+    Output: All most frequent k-mers with up to d mismatches in Text.
+    """
+    patterns = []
+    freqMap = {}
+    n = len(text)
+    for i in range(0, n - k):
+        pattern = text[i:i+k]
+        neighborhood = neighbors(pattern, d)
+        for j in range(len(neighborhood)):
+            neighbor = neighborhood[j]
+            if neighbor in freqMap:
+                freqMap[neighbor] += 1
+            else:
+                freqMap[neighbor] = 1
+    m = maxMap(freqMap)
+    for key, value in freqMap.items():
+        if value == m:
+            patterns.append(key)
+    return patterns
+
+
 def first_task():
     '''
     Implement PatternCount (reproduced below).
@@ -392,9 +473,8 @@ def seventh_task():
     dist = hamming(str1, str2)
     print(dist)
 
+
 #! Approximate Pattern Matching Problem
-
-
 def eigth_task():
     """
     We say that k-mer Pattern appears as a substring of Text with at most d mismatches, i.e 
@@ -440,6 +520,39 @@ def ninth_task():
     print(res)
 
 
+#! Frequent Words with Mismatches Problem
+def tenth_task():
+    """
+    Code Challenge: Solve the Frequent Words with Mismatches Problem.
+
+    Input: A string Text as well as integers k and d. (You may assume k ≤ 12 and d ≤ 3.)
+    Output: All most frequent k-mers with up to d mismatches in Text.
+    """
+    with open("/home/snopoff/Downloads/dataset_240221_9.txt", "r") as f:
+        lines = f.readlines()
+    text = lines[0].strip()
+    k, d = list(map(int, lines[1].split(" ")))
+    res = frequent_words_with_mismatches(text, k, d)
+    with open("Stepik course/res.txt", "w") as f:
+        f.write(" ".join(res))
+
+
+def cs_task():
+    """
+    Code Challenge: Implement Neighbors to find the d-neighborhood of a string.
+
+    Input: A string Pattern and an integer d.
+    Output: The collection of strings Neighbors(Pattern, d).
+    """
+    with open("/home/snopoff/Downloads/dataset_240229_4.txt", "r") as f:
+        lines = f.readlines()
+    pattern = lines[0].strip()
+    d = int(lines[-1].strip())
+    res = neighbors(pattern, d)
+    with open("Stepik course/res.txt", "w") as f:
+        f.write(" ".join(res))
+
+
 def eight_tests():
     path = "/home/snopoff/Downloads/ApproximatePatternMatching/"
     n = len([name for name in os.listdir(path + "inputs")])
@@ -459,5 +572,43 @@ def eight_tests():
         assert res == exp, "In {}:\n res = {}\n exp = {}".format(i, res, exp)
 
 
+def tenth_tests():
+    path = "/home/snopoff/Downloads/FrequentWordsMismatches/"
+    n = len([name for name in os.listdir(path + "inputs")])
+    for i in range(1, n+1):
+        print("-------")
+        print("Stage {}".format(i))
+        with open(path + "inputs/input_{}.txt".format(i), "r") as f:
+            lines = f.readlines()
+        text = lines[0].strip()
+        k, d = list(map(int, lines[-1].strip().split(" ")))
+        print("Input data is:\n text = {}\n k = {}\t d = {}".format(text, k, d))
+
+        res = frequent_words_with_mismatches(text, k, d)
+        res = " ".join(list(map(str, res)))
+        with open(path + "outputs/output_{}.txt".format(i), "r") as f:
+            exp = f.read().strip()
+        assert res == exp, "In {}:\n res = {}\n exp = {}".format(i, res, exp)
+
+
+def cs_tests():
+    path = "/home/snopoff/Downloads/Neighborhood/"
+    n = len([name for name in os.listdir(path + "inputs")])
+    for i in range(1, n+1):
+        print("-------")
+        print("Stage {}".format(i))
+        with open(path + "inputs/input_{}.txt".format(i), "r") as f:
+            lines = f.readlines()
+        pattern = lines[0].strip()
+        d = int(lines[-1].strip())
+        print("Input data is:\n text = {}\n d = {}".format(pattern, d))
+
+        res = neighbors(pattern, d)
+        res = " ".join(list(map(str, res)))
+        with open(path + "outputs/output_{}.txt".format(i), "r") as f:
+            exp = f.read().strip()
+        assert res == exp, "In {}:\n res = {}\n exp = {}".format(i, res, exp)
+
+
 if __name__ == '__main__':
-    ninth_task()
+    tenth_task()
