@@ -329,6 +329,42 @@ def frequent_words_with_mismatches(text: str, k: int, d: int):
     return patterns
 
 
+def frequent_words_with_mismatches_and_reverse_complements(text: str, k: int, d: int):
+    """
+    Find the most frequent k-mers (with mismatches and reverse complements) in a string.
+
+    Input: A DNA string Text as well as integers k and d.
+    Output: All k-mers Pattern maximizing the sum Count_d(Text, Pattern) + Count_d(Text, Pattern_rc) over all possible k-mers.
+    """
+    patterns = []
+    freqMap = {}
+    n = len(text)
+    for i in range(0, n - k):
+        pattern = text[i:i+k]
+        pattern_rc = text[i:i+k]
+        neighborhood = neighbors(pattern, d)
+        neighborhood_rc = neighbors(pattern_rc, d)
+        for j in range(len(neighborhood)):
+            neighbor = neighborhood[j]
+            if neighbor in freqMap:
+                freqMap[neighbor] += 1
+            else:
+                freqMap[neighbor] = 1
+        for j in range(len(neighborhood_rc)):
+            neighbor_rc = neighborhood_rc[j]
+            neighbor = reverse_complement(neighbor_rc)
+            if neighbor in freqMap:
+                freqMap[neighbor] += 1
+            else:
+                freqMap[neighbor] = 1
+    print(freqMap)
+    m = maxMap(freqMap)
+    for key, value in freqMap.items():
+        if value == m:
+            patterns.append(key)
+    return patterns
+
+
 def first_task():
     '''
     Implement PatternCount (reproduced below).
@@ -537,6 +573,25 @@ def tenth_task():
         f.write(" ".join(res))
 
 
+#! Frequent Words with Mismatches and Reverse Complements Problem
+def eleventh_task():
+    """
+    Frequent Words with Mismatches and Reverse Complements Problem: 
+        Find the most frequent k-mers (with mismatches and reverse complements) in a string.
+
+    Input: A DNA string Text as well as integers k and d.
+    Output: All k-mers Pattern maximizing the sum Count_d(Text, Pattern)+ Count_d(Text, Pattern_rc) over all possible k-mers.
+    """
+    with open("/home/snopoff/Downloads/dataset_240221_10.txt", "r") as f:
+        lines = f.readlines()
+    text = lines[0].strip()
+    k, d = list(map(int, lines[1].split(" ")))
+    res = frequent_words_with_mismatches_and_reverse_complements(
+        text, k, d)
+    with open("Stepik course/res.txt", "w") as f:
+        f.write(" ".join(res))
+
+
 def cs_task():
     """
     Code Challenge: Implement Neighbors to find the d-neighborhood of a string.
@@ -611,4 +666,4 @@ def cs_tests():
 
 
 if __name__ == '__main__':
-    tenth_task()
+    eleventh_task()
