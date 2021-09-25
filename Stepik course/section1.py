@@ -201,7 +201,7 @@ def hamming(str1: str, str2: str):
     Output: The Hamming distance between these strings.
 
     """
-    assert len(str1) == len(str2)
+    assert len(str1) == len(str2), "{} != {}".format(len(str1), len(str2))
     n = len(str1)
     res = 0
     for i in range(0, n):
@@ -248,7 +248,7 @@ def approx_pattern_count(pattern: str, text: str, d: int):
     return res
 
 
-def neighbors(pattern: str, d: int):
+def neighbors(pattern: str, d: int, verbose=False):
     """
     Neighbors(Pattern, d)
         if d = 0
@@ -276,6 +276,8 @@ def neighbors(pattern: str, d: int):
     neighborhood = []
     suffix = pattern[1:]
     suffixNeighborhood = neighbors(suffix, d)
+    if verbose:
+        print(pattern, "-", suffixNeighborhood)
     for s in suffixNeighborhood:
         if hamming(suffix, s) < d:
             for x in nucl:
