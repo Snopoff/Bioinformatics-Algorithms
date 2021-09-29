@@ -115,7 +115,7 @@ def most_probable(text: str, k: int, profile: np.array):
     return res
 
 
-def generate_profile(Dna: np.array):
+def generate_profile(Dna: np.array, pseudocounts=False):
     """
     Generate profile from given sequence of strings
     """
@@ -129,7 +129,11 @@ def generate_profile(Dna: np.array):
     for i in range(len(Dna)):
         for j in range(len(Dna[0])):
             res[letter_indices[Dna[i][j]], j] += 1
-    return res / len(Dna[0])
+    if pseudocounts:
+        res = res + np.ones_like(res)
+        return np.divide(res, np.sum(res, axis=0))
+    else:
+        return res / len(Dna[0])
 
 
 def compute_consensus(profile: np.array):
@@ -176,6 +180,45 @@ def greedy_motif_search(Dna: list, k: int, t: int):
         consensus = compute_consensus(profile)
         score = distance_to_text(consensus, Motifs)
         if score < score_best:
+            BestMotifs = Motifs
+            consensus_best = consensus
+            score_best = score
+            profile_best = profile
+    return BestMotifs
+
+
+def greedy_motif_search_with_pseudocounts(Dna: list, k: int, t: int):
+    """
+    GreedyMotifSearch(Dna, k, t)
+        form a set of k-mers BestMotifs by selecting 1st k-mers in each string from Dna
+        for each k-mer Motif in the first string from Dna
+            Motif1 ← Motif
+            for i = 2 to t
+                apply Laplace's Rule of Succession to form Profile from motifs Motif1, …, Motifi-1
+                Motifi ← Profile-most probable k-mer in the i-th string in Dna
+            Motifs ← (Motif1, …, Motift)
+            if Score(Motifs) < Score(BestMotifs)
+                BestMotifs ← Motifs
+        output BestMotifs
+
+    Input: Integers k and t, followed by a space-separated collection of strings Dna.
+    Output: A collection of strings BestMotifs resulting from applying GreedyMotifSearch(Dna, k, t) with pseudocounts. 
+    """
+    BestMotifs = [string[0:k]for string in Dna]
+    profile_best = generate_profile(BestMotifs, pseudocounts=True)
+    consensus_best = compute_consensus(profile_best)
+    score_best = distance_to_text(consensus_best, BestMotifs)
+    for i in range(0, len(Dna[0]) - k + 1):
+        Motifs = [None]*t
+        Motifs[0] = Dna[0][i: i+k]
+        for j in range(1, t):
+            profile = generate_profile(Motifs[:j], pseudocounts=True)
+            #print(j, Dna[j], k, profile)
+            Motifs[j] = most_probable(Dna[j], k, profile)
+        consensus = compute_consensus(profile)
+        score = distance_to_text(consensus, Motifs)
+        if score < score_best:
+            print(profile)
             BestMotifs = Motifs
             consensus_best = consensus
             score_best = score
@@ -271,6 +314,30 @@ def fourth_task(curr_dir: str):
         f.write("".join(list(map(str, res))))
 
 
+#! GreedyMotifSearch with Pseudocounts
+def fifth_task(curr_dir: str):
+    """
+    Implement GreedyMotifSearch with pseudocounts.
+
+    Input: Integers k and t, followed by a space-separated collection of strings Dna.
+    Output: A collection of strings BestMotifs resulting from applying GreedyMotifSearch(Dna, k, t) with pseudocounts. 
+            If at any step you find more than one Profile-most probable k-mer in a given string, use the one occurring first.
+    """
+    with open("/home/snopoff/Downloads/dataset_240242_9.txt", "r") as f:
+        lines = f.readlines()
+    str1, str2 = [line.strip() for line in lines]
+    k, t = list(map(int, str1.split(" ")))
+
+    Dna = str2.split(
+        " ")
+
+    res = greedy_motif_search_with_pseudocounts(Dna, k, t)
+    res = " ".join(res)
+    print(res)
+    with open(curr_dir + "/res.txt", "w") as f:
+        f.write("".join(list(map(str, res))))
+
+
 def second_tests(*args):
     path = "/home/snopoff/Downloads/MedianString/"
     n = len([name for name in os.listdir(path + "inputs")])
@@ -293,4 +360,4 @@ def second_tests(*args):
 
 if __name__ == "__main__":
     curr_dir = os.getcwd()
-    fourth_task(curr_dir)
+    fifth_task(curr_dir)
