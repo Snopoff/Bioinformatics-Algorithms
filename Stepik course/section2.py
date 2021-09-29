@@ -281,6 +281,46 @@ def randomized_motif_search(Dna: list, k: int, t: int):
     return BestMotifs
 
 
+def gibbs_sampler(Dna: list, k: int, t: int, N: int):
+    """
+    GibbsSampler(Dna, k, t, N)
+        randomly select k-mers Motifs = (Motif1, …, Motift) in each string from Dna
+        BestMotifs ← Motifs
+        for j ← 1 to N
+            i ← Random(t)
+            Profile ← profile matrix constructed from all strings in Motifs except for Motifi
+            Motifi ← Profile-randomly generated k-mer in the i-th sequence
+            if Score(Motifs) < Score(BestMotifs)
+                BestMotifs ← Motifs
+        return BestMotifs
+    """
+    Motifs = [None]*t
+    for i in range(0, t):
+        r = np.random.randint(0, len(Dna[i])-k+1)
+        Motifs[i] = Dna[i][r: r+k]
+    BestMotifs = Motifs
+    profile_best = generate_profile(BestMotifs, pseudocounts=True)
+    consensus_best = compute_consensus(profile_best)
+    score_best = distance_to_text(consensus_best, BestMotifs)
+
+    for _ in range(N):
+        i = np.random.randint(t)
+        del Motifs[i]
+        profile = generate_profile(Motifs, pseudocounts=True)
+        motifi = most_probable(Dna[i], k, profile)
+        Motifs.insert(i, motifi)
+        consensus = compute_consensus(profile)
+        score = distance_to_text(consensus, Motifs)
+        if score < score_best:
+            BestMotifs = Motifs
+            consensus_best = consensus
+            score_best = score
+            profile_best = profile
+
+    print(score_best)
+    return BestMotifs, score_best
+
+
 def first_task(curr_dir: str):
     """
     Implement MotifEnumeration (reproduced below).
@@ -393,6 +433,7 @@ def fifth_task(curr_dir: str):
         f.write("".join(list(map(str, res))))
 
 
+#! RandomizedMotifSearch
 def sixth_task(curr_dir: str):
     """
     Implement RandomizedMotifSearch.
@@ -411,6 +452,42 @@ def sixth_task(curr_dir: str):
 
     res = randomized_motif_search(Dna, k, t)
     res = " ".join(res)
+    print(res)
+    with open(curr_dir + "/res.txt", "w") as f:
+        f.write("".join(list(map(str, res))))
+
+
+#! GibbsSampler
+def seventh_task(curr_dir: str):
+    """
+    Implement GibbsSampler.
+
+    Input: Integers k, t, and N, followed by a space-separated collection of strings Dna.
+    Output: The strings BestMotifs resulting from running GibbsSampler(Dna, k, t, N) with 20 random starts. 
+            Remember to use pseudocounts!
+    """
+    with open("/home/snopoff/Downloads/rosalind_ba2g.txt", "r") as f:
+        lines = f.readlines()
+    '''
+    str1, str2 = [line.strip() for line in lines]
+    k, t, N = list(map(int, str1.split(" ")))
+
+    Dna = str2.split(
+        " ")
+    '''
+
+    strings = [line.strip() for line in lines]
+    k, t, N = list(map(int, strings[0].split(" ")))
+
+    Dna = strings[1:]
+
+    best_res, best_score = "", np.infty
+    for _ in range(20):
+        res, score = gibbs_sampler(Dna, k, t, N)
+        if score < best_score:
+            best_res = res
+            best_score = score
+    res = " ".join(best_res)
     print(res)
     with open(curr_dir + "/res.txt", "w") as f:
         f.write("".join(list(map(str, res))))
@@ -438,4 +515,4 @@ def second_tests(*args):
 
 if __name__ == "__main__":
     curr_dir = os.getcwd()
-    sixth_task(curr_dir)
+    seventh_task(curr_dir)
