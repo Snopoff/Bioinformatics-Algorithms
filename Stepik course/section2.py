@@ -226,6 +226,61 @@ def greedy_motif_search_with_pseudocounts(Dna: list, k: int, t: int):
     return BestMotifs
 
 
+def generate_motifs(profile: np.array, Dna: list):
+    """
+    Generate new stack of motifs using profile
+    """
+    Motifs = [None]*len(Dna)
+    for i in range(len(Motifs)):
+        Motifs[i] = most_probable(Dna[i], profile.shape[1], profile)
+
+    return Motifs
+
+
+def randomized_motif_search(Dna: list, k: int, t: int):
+    """
+    RandomizedMotifSearch(Dna, k, t)
+        randomly select k-mers Motifs = (Motif1, …, Motift) in each string from Dna
+        BestMotifs ← Motifs
+        while forever
+            Profile ← Profile(Motifs)
+            Motifs ← Motifs(Profile, Dna)
+            if Score(Motifs) < Score(BestMotifs)
+                BestMotifs ← Motifs
+            else
+                return BestMotifs
+
+    Input: Integers k and t, followed by a space-separated collection of strings Dna.
+    Output: A collection BestMotifs resulting from running RandomizedMotifSearch(Dna, k, t) 1,000 times. 
+            Remember to use pseudocounts!
+    """
+    Motifs = [None]*t
+    for i in range(0, t):
+        r = np.random.randint(0, len(Dna[i])-k+1)
+        Motifs[i] = Dna[i][r: r+k]
+    BestMotifs = Motifs
+    profile_best = generate_profile(BestMotifs, pseudocounts=True)
+    consensus_best = compute_consensus(profile_best)
+    score_best = distance_to_text(consensus_best, BestMotifs)
+
+    for _ in range(1000):
+        profile = generate_profile(Motifs, pseudocounts=True)
+        Motifs = generate_motifs(profile, Dna)
+        consensus = compute_consensus(profile)
+        score = distance_to_text(consensus, Motifs)
+        if score < score_best:
+            BestMotifs = Motifs
+            consensus_best = consensus
+            score_best = score
+            profile_best = profile
+        else:
+            print(score_best)
+            return BestMotifs
+
+    print(score_best)
+    return BestMotifs
+
+
 def first_task(curr_dir: str):
     """
     Implement MotifEnumeration (reproduced below).
@@ -338,6 +393,29 @@ def fifth_task(curr_dir: str):
         f.write("".join(list(map(str, res))))
 
 
+def sixth_task(curr_dir: str):
+    """
+    Implement RandomizedMotifSearch.
+
+    Input: Integers k and t, followed by a space-separated collection of strings Dna.
+    Output: A collection BestMotifs resulting from running RandomizedMotifSearch(Dna, k, t) 1,000 times. 
+            Remember to use pseudocounts!
+    """
+    with open("/home/snopoff/Downloads/dataset_240243_5 (1).txt", "r") as f:
+        lines = f.readlines()
+    str1, str2 = [line.strip() for line in lines]
+    k, t = list(map(int, str1.split(" ")))
+
+    Dna = str2.split(
+        " ")
+
+    res = randomized_motif_search(Dna, k, t)
+    res = " ".join(res)
+    print(res)
+    with open(curr_dir + "/res.txt", "w") as f:
+        f.write("".join(list(map(str, res))))
+
+
 def second_tests(*args):
     path = "/home/snopoff/Downloads/MedianString/"
     n = len([name for name in os.listdir(path + "inputs")])
@@ -360,4 +438,4 @@ def second_tests(*args):
 
 if __name__ == "__main__":
     curr_dir = os.getcwd()
-    fifth_task(curr_dir)
+    sixth_task(curr_dir)
