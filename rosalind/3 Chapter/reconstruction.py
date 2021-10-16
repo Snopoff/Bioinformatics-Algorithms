@@ -21,7 +21,7 @@ def from_list_to_dict(graph: List[Tuple[str, List[str]]]):
     return res
 
 
-def de_brujin_from_patterns(patterns: List[str]):
+def de_bruijn_from_patterns(patterns: List[str]):
     """
     Construct the de Bruijn graph from a set of k-mers.
     @param: pattern: List[str] -- set of k-mers
@@ -97,7 +97,7 @@ def text_reconstruction(patterns: List[str], k: int, verbose=False):
     @param: patterns: List[str] -- composition of a string
     @param: k: int -- integer s.t. patterns are k-mers
     """
-    graph = de_brujin_from_patterns(patterns)
+    graph = de_bruijn_from_patterns(patterns)
     path = eulerian_path(graph)
     if verbose:
         print("Graph is {}".format(graph))

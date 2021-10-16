@@ -15,7 +15,7 @@ def path_to_genome(path: List[str]):
     return res
 
 
-def de_brujin_from_patterns(patterns: List[str]):
+def de_bruijn_from_patterns(patterns: List[str]):
     """
     Construct the de Bruijn graph from a set of k-mers.
     @param: pattern: List[str] -- set of k-mers
@@ -98,7 +98,7 @@ def text_reconstruction(patterns: List[str], k: int):
     @param: patterns: List[str] -- composition of a string
     @param: k: int -- integer s.t. patterns are k-mers
     """
-    graph = de_brujin_from_patterns(patterns)
+    graph = de_bruijn_from_patterns(patterns)
     print("Graph is {}".format(graph))
     path = eulerian_path(graph)
     print("Path is {}".format(path))
@@ -123,7 +123,7 @@ def circular_string(k: int, verbose=True):
     @param: k: int -- integer
     """
     binary_strings = create_binary_strings(k)
-    graph = de_brujin_from_patterns(binary_strings)
+    graph = de_bruijn_from_patterns(binary_strings)
     cycle = eulerian_cycle_from_graph(graph)[:-k+1]
     if verbose:
         print("Binary strings are {}".format(binary_strings))
@@ -131,6 +131,75 @@ def circular_string(k: int, verbose=True):
         print("Path is {}".format(cycle))
     text = path_to_genome(cycle)
     return text
+
+
+def paired_de_bruijn(read_pairs: List[str], verbose=True):
+    """
+    Constructs paired de Bruijn graph
+    @param: read_pairs: List[str] -- given paired k-mers
+    """
+    adj_dict = defaultdict(list)
+    for read in read_pairs:
+        def prefix_func(x): return x[:-1]
+        def suffix_func(x): return x[1:]
+        prefix = "|".join(list(map(prefix_func, read.split('|'))))
+        suffix = "|".join(list(map(suffix_func, read.split('|'))))
+        adj_dict[prefix].append(suffix)
+    if verbose:
+        print(list(adj_dict.items()))
+    return list(adj_dict.items())
+
+
+def string_reconstruction_with_gaps(paired_path: List[str], k: int, d: int, verbose=True):
+    """
+    Reconstructs string via paired path
+    @param: paired_path: List[str] -- given paired k-mers
+    @param: k: int -- integer s.t. we consider k-mers
+    @param: d: int -- interval between paired k-mers
+
+    StringSpelledByGappedPatterns(GappedPatterns, k, d)
+        FirstPatterns ← the sequence of initial k-mers from GappedPatterns
+        SecondPatterns ← the sequence of terminal k-mers from GappedPatterns
+        PrefixString ← path_to_genome(FirstPatterns, k)
+        SuffixString ← path_to_genome(SecondPatterns, k)
+        for i = k+d+1 to |PrefixString|
+            if the i-th symbol in PrefixString does not equal the (i - k - d)-th symbol in SuffixString
+                return "there is no string spelled by the gapped patterns"
+        return PrefixString concatenated with the last k + d symbols of SuffixString
+
+    """
+    def first_pattern_func(x): return x.split('|')[0]
+    def second_pattern_func(x): return x.split('|')[1]
+    first_patterns = list(map(first_pattern_func, paired_path))
+    second_patterns = list(map(second_pattern_func, paired_path))
+    prefix_string = path_to_genome(first_patterns)
+    suffix_string = path_to_genome(second_patterns)
+    index = k + d
+    overlap = prefix_string[index:] == suffix_string[:-index]
+    real_size = k + d + k + len(paired_path) - 1
+    if verbose:
+        print(prefix_string)
+        print(' '*index + suffix_string)
+    if not overlap:
+        return None
+    return prefix_string[:index] + suffix_string
+
+
+def text_reconstruction_from_read_pairs(read_pairs: List[str], k: int, d: int, verbose=True):
+    """
+    Reconstructs text from given read_pairs
+    @param: read_pairs: List[str] -- given paired k-mers
+    @param: k: int -- integer s.t. we consider k-mers
+    @param: d: int -- interval between paired k-mers
+    """
+    paired_graph = paired_de_bruijn(read_pairs)
+    path = eulerian_path(paired_graph)
+    genome = string_reconstruction_with_gaps(path, k, d)
+    if verbose:
+        # print(paired_graph)
+        print("Path is {}".format(path))
+        print("Genome is {}".format(genome))
+    return genome
 
 
 def first_task():
@@ -184,6 +253,7 @@ def third_task():
         f.write(text)
 
 
+#! k-Universal Circular String Problem
 def fourth_task():
     """
     Code Challenge: Solve the k-Universal Circular String Problem.
@@ -196,5 +266,41 @@ def fourth_task():
         f.write(text)
 
 
+#! String Reconstruction from Read-Pairs Problem
+def fifth_task():
+    """
+    Code Challenge: Solve the String Reconstruction from Read-Pairs Problem.
+     Input: Integers k and d followed by a collection of paired k-mers PairedReads.
+     Output: A string Text with (k, d)-mer composition equal to PairedReads.
+    """
+    with open("/home/snopoff/Downloads/dataset_204_16.txt", "r") as f:
+        lines = f.readlines()
+    print(lines)
+    strings = [line.strip() for line in lines]
+    k, d = list(map(int, strings[0].split(' ')))
+    read_pairs = strings[1:]
+    genome = text_reconstruction_from_read_pairs(read_pairs, k, d)
+    with open("res.txt", "w") as f:
+        f.write(genome)
+
+
+#! Gapped Genome Path String Problem
+def seventh_task():
+    """
+    Code Challenge: Implement StringSpelledByGappedPatterns.
+     Input: Integers k and d followed by a sequence of (k,d)-mers (a_1|b_1), … , (a_n|b_n) such that Suffix(a_i|b_i) = Prefix(a_i+1|b_i+1) for 1 ≤ i ≤ n-1.
+     Output: A string Text of length k+d+k+n-1 such that the i-th (k,d)-mer in Text is equal to (a_i|b_i)  for 1 ≤ i ≤ n (if such a string exists).
+    """
+    with open("/home/snopoff/Downloads/dataset_6206_4.txt", "r") as f:
+        lines = f.readlines()
+    print(lines)
+    strings = [line.strip() for line in lines]
+    k, d = list(map(int, strings[0].split(' ')))
+    paired_path = strings[1:]
+    genome = string_reconstruction_with_gaps(paired_path, k, d)
+    with open("res.txt", "w") as f:
+        f.write(genome)
+
+
 if __name__ == "__main__":
-    fourth_task()
+    fifth_task()

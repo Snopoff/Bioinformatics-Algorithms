@@ -61,7 +61,7 @@ def eulerian_cycle_from_graph(graph: List[Tuple[str, List[str]]]):
     return eulerian_cycle_from_dict(adj_dict)
 
 
-def de_brujin_from_patterns(patterns: List[str]):
+def de_bruijn_from_patterns(patterns: List[str]):
     """
     Construct the de Bruijn graph from a set of k-mers.
     @param: pattern: List[str] -- set of k-mers
@@ -89,7 +89,7 @@ def circular_string(k: int, verbose=True):
     @param: k: int -- integer
     """
     binary_strings = create_binary_strings(k)
-    graph = de_brujin_from_patterns(binary_strings)
+    graph = de_bruijn_from_patterns(binary_strings)
     cycle = eulerian_cycle_from_graph(graph)[:-k+1]
     if verbose:
         print("Binary strings are {}".format(binary_strings))
