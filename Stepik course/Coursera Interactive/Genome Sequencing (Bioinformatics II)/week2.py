@@ -117,14 +117,18 @@ def create_binary_strings(k: int):
     return binary_strings
 
 
-def circular_string(k: int):
+def circular_string(k: int, verbose=True):
     """
     Solves the k-Universal Circular String Problem.
     @param: k: int -- integer
     """
     binary_strings = create_binary_strings(k)
     graph = de_brujin_from_patterns(binary_strings)
-    cycle = eulerian_cycle_from_graph(graph)
+    cycle = eulerian_cycle_from_graph(graph)[:-k+1]
+    if verbose:
+        print("Binary strings are {}".format(binary_strings))
+        print("Graph is {}".format(graph))
+        print("Path is {}".format(cycle))
     text = path_to_genome(cycle)
     return text
 
@@ -169,7 +173,7 @@ def third_task():
      Input: An integer k followed by a list of k-mers Patterns.
      Output: A string Text with k-mer composition equal to Patterns. (If multiple answers exist, you may return any one.)
     """
-    with open("/home/snopoff/Downloads/dataset_203_7.txt", "r") as f:
+    with open("/home/snopoff/Downloads/test.txt", "r") as f:
         lines = f.readlines()
     print(lines)
     strings = [line.strip() for line in lines]
