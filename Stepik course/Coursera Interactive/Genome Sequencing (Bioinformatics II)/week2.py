@@ -202,6 +202,73 @@ def text_reconstruction_from_read_pairs(read_pairs: List[str], k: int, d: int, v
     return genome
 
 
+def maximal_non_branching_paths(graph: List[Tuple[str, List[str]]]):
+    """
+    Returns maximal non branching paths for given graph
+    @param: graph: List[Tuple[str, List[str]]]
+
+    MaximalNonBranchingPaths(Graph)
+        Paths ← empty list
+        for each node v in Graph
+            if v is not a 1-in-1-out node
+                if out(v) > 0
+                    for each outgoing edge (v, w) from v
+                        NonBranchingPath ← the path consisting of single edge (v, w)
+                        while w is a 1-in-1-out node
+                            extend NonBranchingPath by the edge (w, u) 
+                            w ← u
+                        add NonBranchingPath to the set Paths
+        for each isolated cycle Cycle in Graph
+            add Cycle to Paths
+        return Paths
+    """
+    paths = []
+    adj_dict = from_list_to_dict(graph)
+    print(adj_dict)
+    all_dict_values = [v for values in adj_dict.values() for v in values]
+    all_vertices = list(set(all_dict_values).union(set(adj_dict.keys())))
+    def is_one_to_one(x): return all_dict_values.count(
+        x) == 1 and len(adj_dict[x]) == 1
+    all_one_to_one_nodes = list(filter(is_one_to_one, all_vertices))
+    used_nodes = []
+    for node in all_vertices:
+        if not is_one_to_one(node):
+            if len(adj_dict[node]) > 0:
+                for another_node in adj_dict[node]:
+                    path = [node, another_node]
+                    while is_one_to_one(another_node):
+                        new_node = adj_dict[another_node][0]
+                        path.append(new_node)
+                        another_node = new_node
+                    print(path)
+                    used_nodes.extend(list(set(path)))
+                    paths.append(path)
+    while len(set(used_nodes)) != len(set(all_vertices)):
+        unused_nodes = list(set(all_vertices).difference(set(used_nodes)))
+        node = unused_nodes[0]
+        another_node = adj_dict[node][0]
+        cycle = [node, another_node]
+        while another_node != node:
+            another_node = adj_dict[another_node][0]
+            cycle.append(another_node)
+        used_nodes.extend(list(set(cycle)))
+        paths.append(cycle)
+    return paths
+
+
+def generate_contigs(patterns: List[str]):
+    """
+    Generate the contigs from a collection of reads (with imperfect coverage).
+    @param: patterns: List[str] -- collection of reads
+    """
+    graph = de_bruijn_from_patterns(patterns)
+    paths = maximal_non_branching_paths(graph)
+    contigs = [None]*len(paths)
+    for i, path in enumerate(paths):
+        contigs[i] = path_to_genome(path)
+    return contigs
+
+
 def first_task():
     """
     Code Challenge: Solve the Eulerian Cycle Problem.
@@ -284,6 +351,22 @@ def fifth_task():
         f.write(genome)
 
 
+#! Contig Generation Problem
+def sixth_task():
+    """
+    Contig Generation Problem: Generate the contigs from a collection of reads (with imperfect coverage).
+     Input: A collection of k-mers Patterns.
+     Output: All contigs in DeBruijn(Patterns). 
+    """
+    with open("/home/snopoff/Downloads/dataset_205_5.txt", "r") as f:
+        lines = f.readlines()
+    print(lines)
+    patterns = [line.strip() for line in lines]
+    contigs = generate_contigs(patterns)
+    with open("res.txt", "w") as f:
+        f.write(" ".join(contigs))
+
+
 #! Gapped Genome Path String Problem
 def seventh_task():
     """
@@ -302,5 +385,27 @@ def seventh_task():
         f.write(genome)
 
 
+def eigth_task():
+    """
+    Code Challenge: Implement MaximalNonBranchingPaths.
+     Input: The adjacency list of a graph whose nodes are integers.
+     Output: The collection of all maximal nonbranching paths in this graph.
+    """
+    with open("/home/snopoff/Downloads/dataset_6207_2.txt", "r") as f:
+        lines = f.readlines()
+    print(lines)
+    strings = [line.strip() for line in lines]
+    graph = [None]*len(strings)
+    for i, string in enumerate(strings):
+        splitted_string = string.split(' -> ')
+        graph[i] = (splitted_string[0], splitted_string[1].split(','))
+    paths = maximal_non_branching_paths(graph)
+    with open('res.txt', 'w') as f:
+        res = ''
+        for path in paths:
+            res += " -> ".join(path) + "\n"
+        f.write(res[:-1])
+
+
 if __name__ == "__main__":
-    fifth_task()
+    sixth_task()
