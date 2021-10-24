@@ -1,5 +1,13 @@
-from typing import List, Callable
+"""
+#! Implement ConvolutionCyclopeptideSequencing
+
+Given: An integer M, an integer N, and a collection of (possibly repeated) integers Spectrum.
+Return: A cyclic peptide LeaderPeptide with amino acids taken only from the top M elements (and ties) of the convolution of 
+        Spectrum that fall between 57 and 200, and where the size of Leaderboard is restricted to the top N (and ties).
+"""
+from typing import List
 from collections import defaultdict
+
 
 INTEGER_MASS = {'G': 57, 'A': 71, 'S': 87, 'P': 97, 'V': 99, 'T': 101, 'C': 103, 'I': 113, 'L': 113, 'N': 114,
                 'D': 115, 'K': 128, 'Q': 128, 'E': 129, 'M': 131, 'H': 137, 'F': 147, 'R': 156, 'Y': 163, 'W': 186}
@@ -128,12 +136,13 @@ def trim(leaderboard: List[str], spectrum: List[int], N: int):
     return result
 
 
-def leaderboard_cyclopeptide_sequencing(spectrum: List[int], N: int):
+def leaderboard_cyclopeptide_sequencing(spectrum: List[int], N: int, alphabet: List[int], verbose=False):
     """
     Finds a cyclic peptide whose theoretical spectrum matches the experimental spectrum 
     with so called Leaderboard 
     @param: spectrum: List[int] -- given spectrum 
     @param: N: int -- number of best N scores we consider
+    @param: alphabet: List[int] -- provided alphabet
 
     LeaderboardCyclopeptideSequencing(Spectrum, N)
         Leaderboard ← set containing only the empty peptide
@@ -149,18 +158,24 @@ def leaderboard_cyclopeptide_sequencing(spectrum: List[int], N: int):
             Leaderboard ← Trim(Leaderboard, Spectrum, N)
         output LeaderPeptide
     """
-    leaderboard = [""]
-    leader_peptide = ""
-    expander = [key for key in INTEGER_MASS.keys() if key not in ["L", "Q"]]
+    leaderboard = [[]]
+    leader_peptide = []
+    leader_score = 0
     while leaderboard != []:
-        leaderboard = expand_peptides(leaderboard, expander=expander)
+        leaderboard = expand_peptides(leaderboard, expander=alphabet)
         candidates_to_remove = []
         for peptide in leaderboard:
-            spec = cyclic_spectrum(peptide)
             linear_spec = linear_spectrum(peptide)
             if linear_spec[-1] == spectrum[-1]:
-                if compute_score(peptide, spectrum) > compute_score(leader_peptide, spectrum):
+                score = compute_score(peptide, spectrum)
+                if score > leader_score:
                     leader_peptide = peptide
+                    leader_score = score
+                    if verbose:
+                        print("Score is {}".format(score))
+                if verbose:
+                    if score == leader_score:
+                        print("Similar peptide is {}".format(peptide))
             elif linear_spec[-1] > spectrum[-1]:
                 candidates_to_remove.append(peptide)
         leaderboard = [
@@ -204,47 +219,6 @@ def choose_frequent(array: List[int], M: int, limits: List[int]):
     return most_freq
 
 
-def modified_leaderboard_cyclopeptide_sequencing(spectrum: List[int], N: int, alphabet: List[int]):
-    """
-    Modified version of leaderboard_cyclopeptide_sequencing special for convolution_cyclopeptide_sequencing
-    in order to have an opportunity to pass alphabet as parameter and work with alphabet as with list of masses
-    @param: spectrum: List[int] -- given spectrum 
-    @param: N: int -- number of best N scores we consider
-    @param: alphabet: List[int] -- provided alphabet
-
-    LeaderboardCyclopeptideSequencing(Spectrum, N)
-        Leaderboard ← set containing only the empty peptide
-        LeaderPeptide ← empty peptide
-        while Leaderboard is non-empty
-            Leaderboard ← Expand(Leaderboard)
-            for each Peptide in Leaderboard
-                if Mass(Peptide) = ParentMass(Spectrum)
-                    if Score(Peptide, Spectrum) > Score(LeaderPeptide, Spectrum)
-                        LeaderPeptide ← Peptide
-                else if Mass(Peptide) > ParentMass(Spectrum)
-                    remove Peptide from Leaderboard
-            Leaderboard ← Trim(Leaderboard, Spectrum, N)
-        output LeaderPeptide
-    """
-    leaderboard = [[]]
-    leader_peptide = []
-    while leaderboard != []:
-        leaderboard = expand_peptides(leaderboard, expander=alphabet)
-        candidates_to_remove = []
-        for peptide in leaderboard:
-            spec = cyclic_spectrum(peptide)
-            linear_spec = linear_spectrum(peptide)
-            if linear_spec[-1] == spectrum[-1]:
-                if compute_score(peptide, spectrum) > compute_score(leader_peptide, spectrum):
-                    leader_peptide = peptide
-            elif linear_spec[-1] > spectrum[-1]:
-                candidates_to_remove.append(peptide)
-        leaderboard = [
-            pep for pep in leaderboard if pep not in candidates_to_remove]
-        leaderboard = trim(leaderboard, spectrum, N)
-    return leader_peptide
-
-
 def convolution_cyclopeptide_sequencing(spectrum: List[int], N: int, M: int):
     """
     Finds a cyclic peptide whose theoretical spectrum matches the experimental spectrum 
@@ -256,68 +230,11 @@ def convolution_cyclopeptide_sequencing(spectrum: List[int], N: int, M: int):
     conv = compute_convolution(spectrum)
     acid_masses = choose_frequent(conv, M, [57, 200])
     alphabet = [[mass] for mass in acid_masses]
-    return modified_leaderboard_cyclopeptide_sequencing(spectrum, N, alphabet)
+    return leaderboard_cyclopeptide_sequencing(spectrum, N, alphabet)
 
 
-def first_task():
-    """
-    Cyclopeptide Scoring Problem: Compute the score of a cyclic peptide against a spectrum.
-
-     Input: An amino acid string Peptide and a collection of integers Spectrum.
-     Output: The score of Peptide against Spectrum, Score(Peptide, Spectrum).
-    """
-    with open("/home/snopoff/Downloads/dataset_102_3.txt", "r") as f:
-        lines = f.readlines()
-    peptide = lines[0].strip()
-    spectrum = list(map(int, lines[1].strip().split(" ")))
-    score = compute_score(peptide, spectrum)
-    with open("res.txt", "w") as f:
-        f.write(str(score))
-
-
-def second_task():
-    """
-    Implement LeaderboardCyclopeptideSequencing.
-
-     Input: An integer N and a collection of integers Spectrum.
-     Output: LeaderPeptide after running LeaderboardCyclopeptideSequencing(Spectrum, N).
-    """
-    with open("/home/snopoff/Downloads/dataset_102_8.txt", "r") as f:
-        lines = f.readlines()
-    N = int(lines[0].strip())
-    spectrum = list(map(int, lines[1].strip().split(" ")))
-    peptide = leaderboard_cyclopeptide_sequencing(spectrum=spectrum, N=N)
-    res = "-".join([str(INTEGER_MASS[acid]) for acid in peptide])
-    with open("res.txt", "w") as f:
-        f.write(res)
-
-
-def third_task():
-    """
-    Spectral Convolution Problem: Compute the convolution of a spectrum.
-
-     Input: A collection of integers Spectrum in increasing order..
-     Output: The list of elements in the convolution of Spectrum. If an element has multiplicity k, 
-            it should appear exactly k times; you may return the elements in any order.
-    """
-    with open("/home/snopoff/Downloads/dataset_104_4.txt", "r") as f:
-        line = f.readline().strip()
-    spectrum = list(map(int, line.split(" ")))
-    conv = compute_convolution(spectrum)
-    res = " ".join(list(map(str, conv)))
-    with open("res.txt", "w") as f:
-        f.write(res)
-
-
-def fourth_task():
-    """
-    Implement ConvolutionCyclopeptideSequencing.
-
-     Input: An integer M, an integer N, and a collection of (possibly repeated) integers Spectrum.
-     Output: A cyclic peptide LeaderPeptide with amino acids taken only from the top M elements (and ties) of the convolution of 
-            Spectrum that fall between 57 and 200, and where the size of Leaderboard is restricted to the top N (and ties).
-    """
-    with open("/home/snopoff/Downloads/dataset_104_7.txt", "r") as f:
+def main():
+    with open("/home/snopoff/Downloads/rosalind_ba4i.txt", "r") as f:
         line = f.readlines()
     M = int(line[0])
     N = int(line[1])
@@ -328,43 +245,5 @@ def fourth_task():
         f.write(res)
 
 
-def fifth_task():
-    """
-    Compute the score of a linear peptide with respect to a spectrum.
-
-     Input: An amino acid string Peptide and a collection of integers Spectrum.
-     Output: The linear score of Peptide with respect to Spectrum, LinearScore(Peptide, Spectrum).
-    """
-    with open("/home/snopoff/Downloads/dataset_4913_1.txt", "r") as f:
-        lines = f.readlines()
-    peptide = lines[0].strip()
-    spectrum = list(map(int, lines[1].split(" ")))
-    lin_score = compute_score(
-        peptide, spectrum, compute_spectrum=linear_spectrum)
-    with open("res.txt", "w") as f:
-        f.write(str(lin_score))
-
-
-def sixth_task():
-    """
-    Implement Trim (reproduced below).
-
-    Input: A collection of peptides Leaderboard, a collection of integers Spectrum, and an integer N.
-    Output: The N highest-scoring linear peptides on Leaderboard with respect to Spectrum.
-    """
-    with open("/home/snopoff/Downloads/dataset_4913_3.txt", "r") as f:
-        lines = f.readlines()
-    leaderboard = lines[0].strip().split(" ")
-    spectrum = list(map(int, lines[1].strip().split(" ")))
-    N = int(lines[2])
-    leaderboard_masses = [[INTEGER_MASS[acid]
-                           for acid in peptide] for peptide in leaderboard]
-    trimmed = trim(leaderboard_masses, spectrum, N)
-    peptides = [
-        leaderboard[leaderboard_masses.index(mass)] for mass in trimmed]
-    with open("res.txt", "w") as f:
-        f.write(" ".join(peptides))
-
-
 if __name__ == "__main__":
-    fourth_task()
+    main()
