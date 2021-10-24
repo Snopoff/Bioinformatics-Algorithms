@@ -130,8 +130,7 @@ def main():
     formatted_masses = ["-".join(list(map(str, m))) for m in masses]
     res = " ".join(formatted_masses)
     with open("res.txt", "w") as f:
-        f.write(" ".join(sorted(res.split(" "))))
-
+        f.write(" ".join(sorted(res.split(" ")))
 
 if __name__ == "__main__":
     main()

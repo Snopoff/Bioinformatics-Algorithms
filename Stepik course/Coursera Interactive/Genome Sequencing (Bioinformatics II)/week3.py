@@ -116,6 +116,44 @@ def calculate_spectrum(peptide: str):
     return spectrum, cyclic_subpeptides
 
 
+def cyclic_spectrum(peptide: str, verbose=False):
+    """
+    Calculates cyclic spectrum for provided peptide
+    This is the same as calculate_spectrum function but with different realisation, which is similar to linear_spectrum
+    @param: peptide: str -- provided peptide
+
+    CyclicSpectrum(Peptide, Alphabet, AminoAcidMass)
+        PrefixMass(0) ← 0
+        for i ← 1 to |Peptide|
+            for every symbol s in Alphabet
+                if s = i-th amino acid in Peptide
+                    PrefixMass(i) ← PrefixMass(i − 1) + AminoAcidMass﻿[s]
+        peptideMass ← PrefixMass(|Peptide|)
+        CyclicSpectrum ← a list consisting of the single integer 0
+        for i ← 0 to |Peptide| − 1
+            for j ← i + 1 to |Peptide|
+                add PrefixMass(j) − PrefixMass(i) to CyclicSpectrum
+                if i > 0 and j < |Peptide|
+                    add peptideMass - (PrefixMass(j) − PrefixMass(i)) to CyclicSpectrum
+        return sorted list CyclicSpectrum
+    """
+    n = len(peptide)
+    prefix_mass = [0] * (n+1)
+    for i in range(1, n+1):
+        acid = peptide[i-1]
+        prefix_mass[i] = prefix_mass[i-1] + INTEGER_MASS[acid]
+    if verbose:
+        print(prefix_mass)
+    cyclic_spec = [0]
+    for i in range(0, n):
+        for j in range(i+1, n+1):
+            cyclic_spec.append(prefix_mass[j] - prefix_mass[i])
+            if i > 0 and j < n:
+                cyclic_spec.append(
+                    prefix_mass[-1] - (prefix_mass[j] - prefix_mass[i]))
+    return sorted(cyclic_spec)
+
+
 def linear_spectrum(peptide: str, verbose=False):
     """
     Calculates linear spectrum for given peptide
