@@ -24,12 +24,16 @@ def is_element_sorted(index: int, permutation: np.array):
     return index + 1 == permutation[index]
 
 
-def print_array(array: np.array):
+def print_array(array: np.array, sign=True):
     """
     Prints array in a nice way
     @param: array: np.array -- array
+    @param: sign: bool -- if True, it prints array with sign, otherwise without
     """
-    res = ' '.join(('+' if i > 0 else '') + str(i) for i in array)
+    if sign:
+        res = ' '.join(('+' if i > 0 else '') + str(i) for i in array)
+    else:
+        res = ' '.join(list(map(str, array)))
     return res
 
 
