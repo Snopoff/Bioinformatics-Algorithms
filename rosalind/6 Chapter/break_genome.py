@@ -1,3 +1,10 @@
+"""
+#! Implement 2-BreakOnGenome
+Solve the 2-Break On Genome Graph Problem.
+
+Given: A genome P, followed by indices i, i', j, and j'.
+Return: The genome P' resulting from applying the 2-break operation.
+"""
 import numpy as np
 from typing import List
 
@@ -133,57 +140,12 @@ def graph_to_genome(edges: List):
     genome = []
     cycles = find_cycles(edges)
     for cycle in cycles:
-        print(cycle)
         nodes = np.array(
             [element for edge in cycle for element in edge], dtype=np.int32)
         nodes = np.roll(nodes, 1)
-        print(nodes)
         chromosome = cycle_to_chromosome(nodes)
         genome.append(chromosome)
     return genome
-
-
-def search_cycles(edges: List):
-    """
-    Finds cycles in the given graph
-    @param: edges: List
-    """
-    n = len(edges)
-    cycles = [[edges[0]]]
-    visited = set(edges[0])
-    last_edges = edges[1:]
-
-    while True:
-        next_edge = list(
-            filter(lambda edge: cycles[-1][-1][0] in edge or cycles[-1][-1][1] in edge, last_edges))
-        if not next_edge:
-            print("There's no next edge; forming new cycle if possible")
-            if not last_edges:
-                break
-            edge = last_edges.pop(0)
-            visited.update(edge)
-            cycles.append([edge])
-        else:
-            edge = next_edge[0]
-            last_edges.remove(edge)
-            visited.update(edge)
-            cycles[-1].append(edge)
-
-    return cycles
-
-
-def two_break_distance(genome1: List, genome2: List):
-    """
-    Finds 2-break distance between genome_1 and genome_2
-    @param: genome1: List -- first genome
-    @param: genome2: List -- second genome
-    """
-    edges1 = colored_edges(genome1)
-    edges2 = colored_edges(genome2)
-    breakpoint_graph = edges1 + edges2
-    print(breakpoint_graph)
-    cycles = search_cycles(breakpoint_graph)
-    return len(edges1) - len(cycles)
 
 
 def two_break_on_genome_graph(edges: List, indices: List):
@@ -227,155 +189,33 @@ def two_break_on_genome(genome: np.array, indices: List):
     return res
 
 
-def task1():
+def reverse_genome(genome: List):
     """
-    Solve the 2-Break Distance Problem.
-
-    Input: Genomes P and Q.
-    Output: The 2-break distance d(P, Q).
+    Reverses given genome
+    @param: genome: List -- given genome
     """
-    with open("/home/snopoff/Downloads/dataset_288_4.txt", "r") as f:
-        lines = list(map(str.strip, f.readlines()))
-    genomes = [line[1:-1].split(")(") for line in lines]
-    genomes = [list(map(lambda chromosome: np.array(
-        list(map(int, chromosome.split(" "))), dtype=np.int32), genome)) for genome in genomes]
-    distance = two_break_distance(*genomes)
-    print(distance)
-    with open("res.txt", "w") as f:
-        f.write(str(distance))
+    n = len(genome)
+    for i in range(n):
+        genome[i] = genome[i][::-1]
+        genome[i] = [-1 * element for element in genome[i]]
+    return genome
 
 
-#! TODO
-def task2():
-    """
-    Solve the 2-Break Sorting Problem.
-    2-Break Sorting Problem: Find a shortest transformation of one genome into another by 2-breaks.
-
-    Input: Two genomes with circular chromosomes on the same set of synteny blocks.
-    Output: The sequence of genomes resulting from applying a shortest sequence of 2-breaks transforming one genome into the other.
-    """
-    with open("/home/snopoff/Downloads/dataset_288_4.txt", "r") as f:
-        lines = list(map(str.strip, f.readlines()))
-    genomes = [line[1:-1].split(")(") for line in lines]
-    genomes = [list(map(lambda chromosome: np.array(
-        list(map(int, chromosome.split(" "))), dtype=np.int32), genome)) for genome in genomes]
-
-
-def task4():
-    """
-    Implement ChromosomeToCycle.
-
-    Input: A chromosome Chromosome containing n synteny blocks.
-    Output: The sequence Nodes of integers between 1 and 2n resulting from applying ChromosomeToCycle to Chromosome.
-    """
-    with open("/home/snopoff/Downloads/dataset_8222_4.txt", "r") as f:
-        chromosome = np.array(
-            list(map(int, f.readline().strip('()\n').split(" "))), dtype=np.int32)
-    cycle = chromosome_to_cycle(chromosome)
-    representation = "(" + print_array(cycle, sign=False) + ")"
-    with open("res.txt", "w") as f:
-        f.write(representation)
-
-
-def task5():
-    """
-    Implement CycleToChromosome.
-
-    Input: A sequence Nodes of integers between 1 and 2n.
-    Output: The chromosome Chromosome containing n synteny blocks resulting from applying CycleToChromosome to Nodes.
-    """
-    with open("/home/snopoff/Downloads/dataset_8222_5.txt", "r") as f:
-        cycle = np.array(
-            list(map(int, f.readline().strip('()\n').split(" "))), dtype=np.int32)
-    chromosome = cycle_to_chromosome(cycle)
-    representation = "(" + print_array(chromosome) + ")"
-    with open("res.txt", "w") as f:
-        f.write(representation)
-
-
-def task6():
-    """
-    Implement ColoredEdges.
-
-    Input: A genome P.
-    Output: The collection of colored edges in the genome graph of P in the form (x, y).
-    """
-    with open("/home/snopoff/Downloads/dataset_8222_7.txt", "r") as f:
-        genome = f.readline().strip()[1:-1].split(")(")
-        print(genome)
-    genome = list(map(lambda chromosome: np.array(
-        list(map(int, chromosome.split(" "))), dtype=np.int32), genome))
-    edges = colored_edges(genome)
-    res = ""
-    for edge in edges:
-        res += "(" + ', '.join(list(map(str, edge))) + "), "
-    res = res[:-2]
-    with open("res.txt", "w") as f:
-        f.write(res)
-
-
-def task7():
-    """
-    Implement GraphToGenome.
-
-    Input: The colored edges ColoredEdges of a genome graph.
-    Output: The genome P corresponding to this genome graph.
-    """
-    with open("/home/snopoff/Downloads/dataset_8222_8.txt", "r") as f:
-        edges = f.readline().strip()[1:-1].split("), (")
-    edges = [list(map(int, edge.split(", "))) for edge in edges]
-    print(edges)
-    genome = graph_to_genome(edges)
-    res = ""
-    for chromosome in genome:
-        res += "(" + print_array(chromosome) + ")"
-    with open("res.txt", "w") as f:
-        f.write(res)
-
-
-def task8():
-    """
-    Implement 2-BreakOnGenomeGraph.
-
-    Input: The colored edges of a genome graph GenomeGraph, followed by indices i_1 , i_2 , i_3 , and i_4 .
-    Output: The colored edges of the genome graph resulting from applying 
-            the 2-break operation 2-BreakOnGenomeGraph(GenomeGraph, i_1 , i_2 , i_3 , i_4 ).
-    """
-    with open("/home/snopoff/Downloads/rosalind_ba6j.txt", "r") as f:
-        lines = f.readlines()
-
-    edges = lines[0].strip()[1:-1].split("), (")
-    edges = [list(map(int, edge.split(", "))) for edge in edges]
-    indices = list(map(int, lines[1].strip().split(", ")))
-    edges = two_break_on_genome_graph(edges, indices)
-    res = ""
-    for edge in edges:
-        res += "(" + ', '.join(list(map(str, edge))) + "), "
-    res = res[:-2]
-    with open("res.txt", "w") as f:
-        f.write(res)
-
-
-def task9():
-    """
-    Implement 2-BreakOnGenome.
-
-    Input: A genome P, followed by indices i1 , i2 , i3 , and i4 .
-    Output: The genome P' resulting from applying the 2-break operation 2-BreakOnGenome(GenomeGraph i1 , i2 , i3 , i4 ).
-    """
-    with open("/home/snopoff/Downloads/dataset_8224_3.txt", "r") as f:
+def main():
+    with open("/home/snopoff/Downloads/rosalind_ba6k (1).txt", "r") as f:
         lines = f.readlines()
     genome = lines[0].strip()[1:-1].split(")(")
     genome = list(map(lambda chromosome: np.array(
         list(map(int, chromosome.split(" "))), dtype=np.int32), genome))
     indices = list(map(int, lines[1].strip().split(", ")))
     genome_res = two_break_on_genome(genome, indices)
+    genome_res = reverse_genome(genome_res)
     res = ""
     for edge in genome_res:
-        res += "(" + print_array(edge) + ")"
+        res += "(" + print_array(edge) + ") "
     with open("res.txt", "w") as f:
         f.write(res)
 
 
 if __name__ == "__main__":
-    task9()
+    main()
