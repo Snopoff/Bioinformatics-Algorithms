@@ -133,11 +133,9 @@ def graph_to_genome(edges: List):
     genome = []
     cycles = find_cycles(edges)
     for cycle in cycles:
-        print(cycle)
         nodes = np.array(
             [element for edge in cycle for element in edge], dtype=np.int32)
         nodes = np.roll(nodes, 1)
-        print(nodes)
         chromosome = cycle_to_chromosome(nodes)
         genome.append(chromosome)
     return genome
@@ -157,7 +155,6 @@ def search_cycles(edges: List):
         next_edge = list(
             filter(lambda edge: cycles[-1][-1][0] in edge or cycles[-1][-1][1] in edge, last_edges))
         if not next_edge:
-            print("There's no next edge; forming new cycle if possible")
             if not last_edges:
                 break
             edge = last_edges.pop(0)
@@ -167,7 +164,14 @@ def search_cycles(edges: List):
             edge = next_edge[0]
             last_edges.remove(edge)
             visited.update(edge)
-            cycles[-1].append(edge)
+            if cycles[-1][-1][-1] != edge[0]:
+                cycles[-1].append(edge[::-1])
+            else:
+                cycles[-1].append(edge)
+
+    for i in range(len(cycles)):
+        rotation = cycles[i].index(min(cycles[i]))
+        cycles[i] = cycles[i][rotation:] + cycles[i][:rotation]
 
     return cycles
 
@@ -181,7 +185,6 @@ def two_break_distance(genome1: List, genome2: List):
     edges1 = colored_edges(genome1)
     edges2 = colored_edges(genome2)
     breakpoint_graph = edges1 + edges2
-    print(breakpoint_graph)
     cycles = search_cycles(breakpoint_graph)
     return len(edges1) - len(cycles)
 
@@ -227,6 +230,72 @@ def two_break_on_genome(genome: np.array, indices: List):
     return res
 
 
+def reverse_genome(genome: List):
+    """
+    Reverses given genome
+    @param: genome: List -- given genome
+    """
+    n = len(genome)
+    for i in range(n):
+        genome[i] = genome[i][::-1]
+        genome[i] = np.array([-1 * element for element in genome[i]])
+    return genome
+
+
+def two_break_sorting(genome1: List, genome2: List):
+    """
+    Finds a shortest transformation of one genome into another by 2-breaks
+    @param: genome1: List -- first genome
+    @param: genome2: List -- second genome
+        ShortestRearrangementScenario(P, Q)
+            output P
+            RedEdges ← ColoredEdges(P)
+            BlueEdges ← ColoredEdges(Q)
+            BreakpointGraph ← the graph formed by RedEdges and BlueEdges
+            while BreakpointGraph has a non-trivial cycle Cycle
+                (i2,i3)<-An arbitrary edge from BlueEdges in a non trivial red-blue cycle
+                (i1,i2)<-An edge from RedEdges originating at node i1
+                (i3,i4)<-an edge from RedEdges originating at node i3
+                RedEdges ← RedEdges with edges (i1, i2) and (i3, i4) removed
+                RedEdges ← RedEdges with edges (i2, i3) and (i4, i1) added
+                BreakpointGraph ← the graph formed by RedEdges and BlueEdges
+                P ← 2-BreakOnGenome(P, i1 , i3 , i2 , i4 )
+                output P
+    """
+    res = [genome1]
+    edges1 = colored_edges(genome1)
+    edges2 = colored_edges(genome2)
+    breakpoint_graph = edges1 + edges2
+    cycles = search_cycles(breakpoint_graph)
+    non_trivial_cycles = list(filter(lambda x: len(x) > 2, cycles))
+    print(edges1)
+    print(edges2)
+    print()
+    while non_trivial_cycles:
+        cycle = non_trivial_cycles[0]
+        second_edges_in_cycle = [
+            edge for edge in cycle if edge in edges2 or edge[::-1] in edges2]
+        i, j = second_edges_in_cycle[0]
+        edge_with_i_2 = list(
+            filter(lambda x: x[0] == i or x[1] == i, edges1))[0]
+        edge_with_i_3 = list(
+            filter(lambda x: x[0] == j or x[1] == j, edges1))[0]
+        i_1, i_2 = edge_with_i_2
+        i_3, i_4 = edge_with_i_3
+        edges1.remove(edge_with_i_2)
+        edges1.remove(edge_with_i_3)
+        edges1.extend([(i_2, i_3), (i_4, i_1)])
+        breakpoint_graph = edges1 + edges2
+        cycles = search_cycles(breakpoint_graph)
+        non_trivial_cycles = list(filter(lambda x: len(x) > 2, cycles))
+        genome1 = two_break_on_genome(genome1, [i_1, i_2, i_4, i_3])
+        res.append(genome1)
+        print(edges1)
+        print(edges2)
+        print()
+    return res
+
+
 def task1():
     """
     Solve the 2-Break Distance Problem.
@@ -245,7 +314,6 @@ def task1():
         f.write(str(distance))
 
 
-#! TODO
 def task2():
     """
     Solve the 2-Break Sorting Problem.
@@ -254,11 +322,19 @@ def task2():
     Input: Two genomes with circular chromosomes on the same set of synteny blocks.
     Output: The sequence of genomes resulting from applying a shortest sequence of 2-breaks transforming one genome into the other.
     """
-    with open("/home/snopoff/Downloads/dataset_288_4.txt", "r") as f:
+    with open("/home/snopoff/Downloads/test.txt", "r") as f:
         lines = list(map(str.strip, f.readlines()))
     genomes = [line[1:-1].split(")(") for line in lines]
+    print(genomes)
     genomes = [list(map(lambda chromosome: np.array(
         list(map(int, chromosome.split(" "))), dtype=np.int32), genome)) for genome in genomes]
+    sequence = two_break_sorting(*genomes)
+    res = ""
+    for genome in sequence:
+        for chromosome in genome:
+            res += "(" + print_array(chromosome) + ")"
+        res += "\n"
+    print(res[:-1])
 
 
 def task4():
@@ -338,7 +414,7 @@ def task8():
     Implement 2-BreakOnGenomeGraph.
 
     Input: The colored edges of a genome graph GenomeGraph, followed by indices i_1 , i_2 , i_3 , and i_4 .
-    Output: The colored edges of the genome graph resulting from applying 
+    Output: The colored edges of the genome graph resulting from applying
             the 2-break operation 2-BreakOnGenomeGraph(GenomeGraph, i_1 , i_2 , i_3 , i_4 ).
     """
     with open("/home/snopoff/Downloads/rosalind_ba6j.txt", "r") as f:
@@ -378,4 +454,4 @@ def task9():
 
 
 if __name__ == "__main__":
-    task9()
+    task2()
